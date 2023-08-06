@@ -23,6 +23,10 @@
   "peerDependencies": {
     "react": ">=16"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:MSiteDev/react-auto-breadcrumbs.git"
+  },
   "keywords": [],
   "author": "MSideDev Mariusz Sosnowski",
   "license": "MIT",

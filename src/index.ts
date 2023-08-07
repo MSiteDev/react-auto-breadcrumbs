@@ -1,54 +1,85 @@
-import { PropsWithChildren, ReactElement, createContext, createElement, useContext, useEffect, useState } from 'react';
+import {
+  PropsWithChildren,
+  ReactElement,
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-import { FakeRegistry, Registry, RegistryInterface } from './Registry';
+import { FakeRegistry, Registry, RegistryInterface } from "./Registry";
 
 export type ElementData = Record<string, any>;
 
 interface Options {
-    displayName?: string;
+  displayName?: string;
 }
 
-export default function createBreadcrumbComponents<TData extends ElementData = ElementData>(options: Options = {}) {
-    const { displayName = 'Default' } = options;
+export default function createBreadcrumbComponents<
+  TData extends ElementData = ElementData,
+>(options: Options = {}) {
+  const { displayName = "Default" } = options;
 
-    const DepthContext = createContext<number>(0);
-    DepthContext.displayName = `BreadcrumbDepthContext-${displayName}`;
+  const DepthContext = createContext<number>(0);
+  DepthContext.displayName = `BreadcrumbDepthContext-${displayName}`;
 
-    const RegistryContext = createContext<RegistryInterface<TData>>(new FakeRegistry());
-    RegistryContext.displayName = `BreadcrumbRegistryContext-${displayName}`;
+  const RegistryContext = createContext<RegistryInterface<TData>>(
+    new FakeRegistry(),
+  );
+  RegistryContext.displayName = `BreadcrumbRegistryContext-${displayName}`;
 
-    function BreadcrumbsProvider({ children }: PropsWithChildren) {
-        const [manager] = useState(() => new Registry<TData>());
+  function BreadcrumbsProvider({ children }: PropsWithChildren) {
+    const [manager] = useState(() => new Registry<TData>());
 
-        return createElement(RegistryContext.Provider, { value: manager }, children);
-    }
+    return createElement(
+      RegistryContext.Provider,
+      { value: manager },
+      children,
+    );
+  }
 
-    function Breadcrumb({ children, ...data }: PropsWithChildren<TData>) {
-        const depth = useContext(DepthContext);
-        const manager = useContext(RegistryContext);
+  function Breadcrumb({ children, ...data }: PropsWithChildren<TData>) {
+    const depth = useContext(DepthContext);
+    const manager = useContext(RegistryContext);
 
-        useEffect(() => manager.add({ depth, data }), [manager, depth, ...Object.values(data)]);
+    useEffect(
+      () => manager.add({ depth, data }),
+      [manager, depth, ...Object.values(data)],
+    );
 
-        return createElement(DepthContext.Provider, { value: depth + 1 }, children);
-    }
+    return createElement(DepthContext.Provider, { value: depth + 1 }, children);
+  }
 
-    function useBreadcrumbs() {
-        const manager = useContext(RegistryContext);
-        const [elements, setElements] = useState<readonly Omit<TData, 'children'>[]>([]);
+  function useBreadcrumbs() {
+    const manager = useContext(RegistryContext);
+    const [elements, setElements] = useState<
+      readonly Omit<TData, "children">[]
+    >([]);
 
-        useEffect(() => manager.subscribe(setElements), [manager]);
+    useEffect(() => manager.subscribe(setElements), [manager]);
 
-        return elements;
-    }
+    return elements;
+  }
 
-    function Breadcrumbs({ render }: { render: (elements: readonly Omit<TData, 'children'>[]) => ReactElement }) {
-        return render(useBreadcrumbs());
-    }
+  function useLastBreadcrumb(): Omit<TData, "children"> | null {
+    const breadcrumbs = useBreadcrumbs();
+    return breadcrumbs[breadcrumbs.length - 1] || null;
+  }
 
-    return { BreadcrumbsProvider, Breadcrumb, useBreadcrumbs, Breadcrumbs };
+  function Breadcrumbs({
+    render,
+  }: {
+    render: (elements: readonly Omit<TData, "children">[]) => ReactElement;
+  }) {
+    return render(useBreadcrumbs());
+  }
+
+  return { BreadcrumbsProvider, Breadcrumb, useBreadcrumbs, Breadcrumbs, useLastBreadcrumb };
 }
 
-export const { BreadcrumbsProvider, Breadcrumb, useBreadcrumbs, Breadcrumbs } = createBreadcrumbComponents<{
+export const { BreadcrumbsProvider, Breadcrumb, useBreadcrumbs, Breadcrumbs, useLastBreadcrumb } =
+  createBreadcrumbComponents<{
     label: string;
     path: string;
-}>();
+  }>();

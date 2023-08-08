@@ -45,7 +45,7 @@ export default function createBreadcrumbComponents<
 
     useEffect(
       () => manager.add({ depth, data }),
-      [manager, depth, ...Object.values(data)],
+        [manager, depth].concat(Object.values(data)),
     );
 
     return createElement(DepthContext.Provider, { value: depth + 1 }, children);
